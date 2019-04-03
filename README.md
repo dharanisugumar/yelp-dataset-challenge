@@ -21,6 +21,9 @@ Technology/Infrastructure used:
   Parsing Json data to Tabular format
   1. I used spark to read the json data => spark.read.json(path) => dataframe
   2. Reading nested objects inside the json file can be accessed using "attributes.RestaurantsReservations", "attributes.Caters" etc
+  Parsed json data example in tabular format:
+  
+  
   3. I have created a data model for all the json present inside the directory.
   4. I had created a loop to read all the .json files inside the untar directory. For every file, spark reads the json file and create        the table and insert the table with the dataframe created
   5. This step executes for all the files present inside the hadoop directory.
