@@ -60,4 +60,4 @@ Technology/Infrastructure used:
   2. Docker Spark
   3. Please go through this link: 
    
-  Execute the script using this command:  
+  Execute the script using this command:  docker run -p 2222:22 --name yelp-challenge-app -e ENABLE_INIT_DAEMON=false --network docker-spark_default -v `pwd`:/opt --link spark-master:spark-master -t yelp/challenge-app /bin/bash /yelp_processor.sh yelp_dataset.tar
