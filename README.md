@@ -58,6 +58,7 @@ Technology/Infrastructure used:
  6. nyc_photo for photo.json
  
  Creating a dataframe:
+ 
     val businessData = spark.table("default.nyc_business")
     val checkinData = spark.table("default.nyc_checkin")
     val photoData = spark.table("default.nyc_photo")
