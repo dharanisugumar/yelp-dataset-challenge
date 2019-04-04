@@ -18,7 +18,8 @@ Technology/Infrastructure used:
     First Step: Untar the file and copy the files to the desired local folder
     Second Step: Places those files into HDFS. Spark runs on top on HDFS (for distributed file storage)
     Third Step: Invoke spark submit with the application jar
-  
+ 
+   
   Installation: 
    
   PreRequesities to run the docker script:
@@ -26,8 +27,14 @@ Technology/Infrastructure used:
   2. Docker Spark
   3. Please go through this repository for deployment: https://github.com/dharanisugumar/yelp_docker_spark
    
-  Execute the script using this command:  
+   Execute the script using this command:  
   docker run -p 2222:22 --name yelp-challenge-app -e ENABLE_INIT_DAEMON=false --network docker-spark_default -v `pwd`:/opt --link spark-master:spark-master -t yelp/challenge-app /bin/bash /yelp_processor.sh yelp_dataset.tar
+  
+    ![Alt text](https://github.com/dharanisugumar/yelp-dataset-challenge/blob/master/src/main/resources/scripts/docker-build-yelp.png "docker")
+  
+   ![Alt text](https://github.com/dharanisugumar/yelp-dataset-challenge/blob/master/src/main/resources/scripts/docker-run-command-output.png "docker-run")
+   
+  
   
   Parsing Json data to Tabular format
   1. I used spark to read the json data => spark.read.json(path) => dataframe
