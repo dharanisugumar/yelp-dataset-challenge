@@ -14,6 +14,7 @@ Technology/Infrastructure used:
   8. Maven
   
   I have dockerized all the SMACK components and the program. Docker script gets the yelpdataset.tar (for eg) as a input. 
+    
     First Step: Untar the file and copy the files to the desired local folder
     Second Step: Places those files into HDFS. Spark runs on top on HDFS (for distributed file storage)
     Third Step: Invoke spark submit with the application jar
@@ -28,7 +29,7 @@ Technology/Infrastructure used:
   4. I had created a loop to read all the .json files inside the Untar directory. For every file, spark reads the json file and create a hive table and insert the table with the dataframe created.
   5. This step executes for all the files present inside the hadoop directory.
    Why hive?
-Using Hive as data store we can able to load JSON data into Hive tables by creating schemas.
+  Using Hive as data store we can able to load JSON data into Hive tables by creating schemas. Easy to use. Same like sql-type language.
 
  Once all the tables are loaded, some of the intersting queries written on the data. I used corresponding maven dependencies to execute the process.
  pom dependencies: 
@@ -56,6 +57,6 @@ Using Hive as data store we can able to load JSON data into Hive tables by creat
   PreRequesities to run the docker script:
   1. Docker 
   2. Docker Spark
-  3. 
+  3. Please go through this link: 
    
   Execute the script using this command:  
