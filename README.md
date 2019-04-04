@@ -1,4 +1,4 @@
-# yelp-dataset-challenge
+yelp-dataset-challenge
 Data Engineering task 
 
 Using SMACK components, i need to parse the json data of the yelp data set (https://www.yelp.com/dataset_challenge/dataset) into a tabular format and write queries to validate the data. 
@@ -13,9 +13,9 @@ Technology/Infrastructure used:
   7. Linux
   8. Maven
   
-  I have dockerized all the SMACK components and the program. Docker script gets the yelpdataset.tar(for eg) as a input. 
-    Firt Step: untar the file and copy the files to the desired local folder
-    Second Step: Places those files into HDFS. Spark runs on top on HDFS(for distributed file storage)
+  I have dockerized all the SMACK components and the program. Docker script gets the yelpdataset.tar (for eg) as a input. 
+    First Step: Untar the file and copy the files to the desired local folder
+    Second Step: Places those files into HDFS. Spark runs on top on HDFS (for distributed file storage)
     Third Step: Invoke spark submit with the application jar
   
   Parsing Json data to Tabular format
@@ -25,12 +25,14 @@ Technology/Infrastructure used:
   
   
   3. I have created a data model for all the json present inside the directory.
-  4. I had created a loop to read all the .json files inside the untar directory. For every file, spark reads the json file and create        the table and insert the table with the dataframe created
+  4. I had created a loop to read all the .json files inside the Untar directory. For every file, spark reads the json file and create a hive table and insert the table with the dataframe created.
   5. This step executes for all the files present inside the hadoop directory.
-   
- Once all the tables are loaded, Some of the intersting queries written on the data. I used correspondin maven dependencies to execute     the process.
+   Why hive?
+Using Hive as data store we can able to load JSON data into Hive tables by creating schemas.
+
+ Once all the tables are loaded, some of the intersting queries written on the data. I used corresponding maven dependencies to execute the process.
  pom dependencies: 
- 1. Interesting query I => Query to list all the  review, photo, checkin, tip against business data
+ 1. Interesting query I => Query to list all the review, photo, checkin, tip against business data
   For the corresponding business_id from business.json, get reviews, photo, checking and tip details for the user (join photo.json,tip.json,review.json,checkin.json,user.json and business.json)
  2. Interesting query II => Query to know the user who wrote the review and the review comments and user ratings on the products
    For the business id, find out the user id , his review texts, ratings etc (join user.json, business.json, review.json)
