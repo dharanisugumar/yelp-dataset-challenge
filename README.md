@@ -58,6 +58,6 @@ Technology/Infrastructure used:
   PreRequesities to run the docker script:
   1. Docker 
   2. Docker Spark
-  3. Please go through this link: 
+  3. Please go through this repository for deployment: https://github.com/dharanisugumar/yelp_docker_spark
    
   Execute the script using this command:  docker run -p 2222:22 --name yelp-challenge-app -e ENABLE_INIT_DAEMON=false --network docker-spark_default -v `pwd`:/opt --link spark-master:spark-master -t yelp/challenge-app /bin/bash /yelp_processor.sh yelp_dataset.tar
