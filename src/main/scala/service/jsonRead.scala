@@ -57,47 +57,7 @@ class jsonRead(sparkExecutor:SparkExecutor) {
     val df_1 = spark.read.json(path)
     val df_2 = spark.read.format("json").load(path)
     import  spark.implicits._
-    //df_2.selectExpr("explode(attributes) as e").show(false)
-
-   /*    val dfd = df_1.select("business_id","name","address","city","state","postal_code","latitude","longitude","stars","review_count",
-      "is_open", "hours.Monday","hours.Tuesday","hours.Wednesday","hours.Thursday","hours.Friday","hours.Saturday","hours.Sunday",
-      "categories", "attributes.RestaurantsReservations","attributes.GoodForMeal","attributes.BusinessParking",
-      "attributes.Caters","attributes.NoiseLevel","attributes.RestaurantsTableService",
-      "attributes.RestaurantsTakeOut","attributes.RestaurantsPriceRange2","attributes.OutdoorSeating",
-      "attributes.BikeParking","attributes.Ambience","attributes.HasTV",
-      "attributes.WiFi","attributes.GoodForKids","attributes.Alcohol",
-      "attributes.RestaurantsAttire","attributes.RestaurantsGoodForGroups","attributes.RestaurantsDelivery"
-    ).show(2,false)*/
-    /*sparkExecutor.registerAsTempTable(dfd,"dfd","")
-    //dfd.selectExpr("explode(GoodForMeal) as e").show(false)
-    import com.typesafe.config.ConfigFactory
-    val getResult  = path
-
-    val config = ConfigFactory.parseString(getResult)
-    config.getConfigList("attributes.GoodMeal").get(0).getString("nestedValue .dessert")
-
-    spark.sqlContext.sql("select GoodForMeal.dessert from dfd").show(false)
-
-    dfd.select("attributes.GoodForMeal.dessert").show(false)
-   dfd.show(2,false)
-    var xp_df_1 = df.withColumn("term_flat", explode(df_1("friends")))
-    var xp_df_2 = xp_df_1.drop(xp_df_1.col("friends"))
-
-    var xp_df_data_points = xp_df_2.withColumn("data_points", xp_df_2("term_flat.friends"))
-
-    var xp_df_name = xp_df_data_points.withColumn("m_guid", xp_df_data_points("measure.garage"))
-    var xp_df_name_val = xp_df_name.withColumn("m_name", xp_df_name("measure.street"))
-
-    var xp_df_final = xp_df_name_val.drop(xp_df_name_val.col("term_flat"))
-    var final_df = xp_df_final.drop(xp_df_final.col("data_points"))
-
-    xp_df_data_points.write
-      .format("com.databricks.spark.csv")
-      .option("header", "true")
-      .save("keywordData.csv")
-
-    println("saved to csv file ****************")
-*/
+  
 
     fileName match {
 
