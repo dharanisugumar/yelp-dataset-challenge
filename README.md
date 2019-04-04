@@ -48,24 +48,111 @@ Technology/Infrastructure used:
     Using Hive as data store we can able to load JSON data into Hive tables by creating schemas. Easy to use. Same like sql-type          language.
 
  Once all the tables are loaded, some of the intersting queries written on the data. I used corresponding maven dependencies to execute the process.
+ 
+ Tables are created under default database in hive.
+ 1. nyc_business for business.json data
+ 2. nyc_checkin for checkin.json
+ 3. nyc_review for review.json
+ 4. nyc_user for user.json
+ 5. nyc_tip for tip.json
+ 6. nyc_photo for photo.json
+ 
+ Creating a dataframe:
+    val businessData = spark.table("default.nyc_business")
+    val checkinData = spark.table("default.nyc_checkin")
+    val photoData = spark.table("default.nyc_photo")
+    val reviewData = spark.table("default.nyc_review")
+    val tipData = spark.table("default.nyc_tip")
+    val userData = spark.table("default.nyc_user")
+
+
+    sparkExecutor.registerAsTempTable(businessData, "businessData", "businessData output")
+    sparkExecutor.registerAsTempTable(checkinData, "checkinData", "checkinData output")
+    sparkExecutor.registerAsTempTable(photoData, "photoData", "photoData output")
+    sparkExecutor.registerAsTempTable(reviewData, "reviewData", "reviewData output")
+    sparkExecutor.registerAsTempTable(tipData, "tipData", "tipData output")
+    sparkExecutor.registerAsTempTable(userData, "userData", "userData output")
+    
+ Queries to Execute:
 
  1. Interesting query I => Query to list all the review, photo, checkin, tip against business data
-  For the corresponding business_id from business.json, get reviews, photo, checking and tip details for the user (join photo.json,tip.json,review.json,checkin.json,user.json and business.json)
+  For the corresponding business_id from business.json, get reviews, photo, checking and tip details for the user (join photo.json,tip.json,review.json,checkin.json,user.json and business.json.  
+  
+select photo.*,tip.*,checkin.*,review.* from businessData business
+right join photoData photo
+on business.business_id = photo.business_id
+right join tipData tip
+on tip.business_id = business.business_id
+right join checkinData checkin
+on checkin.business_id = business.business_id
+right join reviewData review
+on review.business_id = business.business_id
+
  2. Interesting query II => Query to know the user who wrote the review and the review comments and user ratings on the products
    For the business id, find out the user id , his review texts, ratings etc (join user.json, business.json, review.json)
+   
+select user.name,review.stars,review.date,review.text,review.useful,review.funny,review.cool,
+user.friends,user.elite,user.average_stars,user.compliment_hot,user.compliment_more,user.compliment_profile,
+user.compliment_cute,user.compliment_list,user.compliment_note,user.compliment_plain,user.compliment_cool,
+user.compliment_funny,user.compliment_writer,user.compliment_photos
+from userData user right join reviewData review on user.user_id = review.user_id
+left join businessData business
+on review.business_id = business.business_id
+
  3. Interesting query III => Query to get the photo and business information against the business data
     Get the information on the photo details for the business
+    
+select photo.photo_id, photo.caption, photo.label, business.categories,business.RestaurantsTableService,
+business.review_count,business.GoodForKids
+from photoData photo right join businessData business on business.business_id = photo.business_id
+and photo.business_id = business.business_id
+
  4. Interesting query IV  => Query to list down the distinct list of categories for the business
     Get the unique distinct categories list for the corresponding business data
+    
+select distinct(business.categories) as categories_list
+from businessData business
+
  5. Interesting query V => Query to get the review counts, stars, review comments on Saturdays and Sundays for the business city and         state
  For the business state and city, get the max review counts, starts received on peek days(saturdays and sundays)
+ 
+select business.review_count,business.stars,business.Sunday, business.Saturday,review.text,
+business.state, business.city
+from businessData business
+right join reviewData review on review.business_id =  business.business_id
+
  6. Interesting query VI => Query to get the years the user was elite
       List the years of the elite users
+      
+select user.elite as elite_user_year , user.user_id, user.name
+from userData user
+
  7. Interesting query VII => Query to get the list of users who wrote the tips
       Get the count of users who wrote the tips
+      
+select count(user.user_id) user_count
+from userData user left join tipData tip
+on tip.user_id = user.user_id
+group by user.user_id
+
  8. Interesting query VIII => Query to get the no of working hours of the shop when the shop is open
       Get the working hours of all the days when the shop is open
+      
+select unix_timestamp(concat(substring(business.Monday,6,11),"00:00"),'HH:mm:ss') - unix_timestamp(oncat(substring(business.Monday,6,11),"00:00"),'HH:mm:ss'),
+substring(business.Monday,6,11)-substring(business.Monday,5) as Monday_work_hours,
+substring(business.Tuesday,6,11)-substring(business.Tuesday,5) as Tuesday_work_hours,
+substring(business.Wednesday,6,11)-substring(business.Wednesday,5) as Wednesday_work_hours,
+substring(business.Thursday,6,11)-substring(business.Thursday,5) as Thursday_work_hours,
+substring(business.Friday,6,11)-substring(business.Friday,5) as Friday_work_hours,
+substring(business.Saturday,6,11)-substring(business.Saturday,5) as Saturday_work_hours,
+substring(business.Sunday,6,11)-substring(business.Sunday,5) as Sunday_work_hours
+from businessData business
+where business.is_open=1
+
  9. Interesting query IX => Query to find out which user has sent maximum number of reviews
       Find the user who has given the maximum reviews
-
+      
+select max(review_count),user_id as max_reviews
+from userData user
+group by user.user_id
 
