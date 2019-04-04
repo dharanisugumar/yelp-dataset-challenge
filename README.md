@@ -35,6 +35,7 @@ Technology/Infrastructure used:
   3. I have created a data model for all the json present inside the directory.
   4. I had created a loop to read all the .json files inside the Untar directory. For every file, spark reads the json file and create a      hive table and insert the table with the dataframe created.
   5. This step executes for all the files present inside the hadoop directory.
+   ![Alt text](Desktop/Capture.jpg?raw=true "Json")
    
    Why hive?
     Using Hive as data store we can able to load JSON data into Hive tables by creating schemas. Easy to use. Same like sql-type          language.
