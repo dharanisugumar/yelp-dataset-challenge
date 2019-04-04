@@ -19,21 +19,28 @@ Technology/Infrastructure used:
     Second Step: Places those files into HDFS. Spark runs on top on HDFS (for distributed file storage)
     Third Step: Invoke spark submit with the application jar
   
+  Installation: 
+   
+  PreRequesities to run the docker script:
+  1. Docker 
+  2. Docker Spark
+  3. Please go through this repository for deployment: https://github.com/dharanisugumar/yelp_docker_spark
+   
+  Execute the script using this command:  
+  docker run -p 2222:22 --name yelp-challenge-app -e ENABLE_INIT_DAEMON=false --network docker-spark_default -v `pwd`:/opt --link spark-master:spark-master -t yelp/challenge-app /bin/bash /yelp_processor.sh yelp_dataset.tar
+  
   Parsing Json data to Tabular format
   1. I used spark to read the json data => spark.read.json(path) => dataframe
   2. Reading nested objects inside the json file can be accessed using "attributes.RestaurantsReservations", "attributes.Caters" etc
-  Parsed json data example in tabular format:
-  
-  
   3. I have created a data model for all the json present inside the directory.
-  4. I had created a loop to read all the .json files inside the Untar directory. For every file, spark reads the json file and create a hive table and insert the table with the dataframe created.
+  4. I had created a loop to read all the .json files inside the Untar directory. For every file, spark reads the json file and create a      hive table and insert the table with the dataframe created.
   5. This step executes for all the files present inside the hadoop directory.
    
    Why hive?
-  Using Hive as data store we can able to load JSON data into Hive tables by creating schemas. Easy to use. Same like sql-type language.
+    Using Hive as data store we can able to load JSON data into Hive tables by creating schemas. Easy to use. Same like sql-type          language.
 
  Once all the tables are loaded, some of the intersting queries written on the data. I used corresponding maven dependencies to execute the process.
- pom dependencies: 
+
  1. Interesting query I => Query to list all the review, photo, checkin, tip against business data
   For the corresponding business_id from business.json, get reviews, photo, checking and tip details for the user (join photo.json,tip.json,review.json,checkin.json,user.json and business.json)
  2. Interesting query II => Query to know the user who wrote the review and the review comments and user ratings on the products
@@ -53,12 +60,4 @@ Technology/Infrastructure used:
  9. Interesting query IX => Query to find out which user has sent maximum number of reviews
       Find the user who has given the maximum reviews
 
- 
-   
-  PreRequesities to run the docker script:
-  1. Docker 
-  2. Docker Spark
-  3. Please go through this repository for deployment: https://github.com/dharanisugumar/yelp_docker_spark
-   
-  Execute the script using this command:  
-  docker run -p 2222:22 --name yelp-challenge-app -e ENABLE_INIT_DAEMON=false --network docker-spark_default -v `pwd`:/opt --link spark-master:spark-master -t yelp/challenge-app /bin/bash /yelp_processor.sh yelp_dataset.tar
+
