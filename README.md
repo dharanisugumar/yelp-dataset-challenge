@@ -29,6 +29,7 @@ Technology/Infrastructure used:
   5. This step executes for all the files present inside the hadoop directory.
    
  Once all the tables are loaded, Some of the intersting queries written on the data. I used correspondin maven dependencies to execute     the process.
+ pom dependencies: 
  1. Interesting query I => Query to list all the  review, photo, checkin, tip against business data
   For the corresponding business_id from business.json, get reviews, photo, checking and tip details for the user (join photo.json,tip.json,review.json,checkin.json,user.json and business.json)
  2. Interesting query II => Query to know the user who wrote the review and the review comments and user ratings on the products
@@ -50,6 +51,9 @@ Technology/Infrastructure used:
 
  
    
-   
+  PreRequesities to run the docker script:
+  1. Docker 
+  2. Docker Spark
+  3. 
    
   Execute the script using this command:  
