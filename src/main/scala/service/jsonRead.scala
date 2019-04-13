@@ -5,11 +5,11 @@ import java.util.Calendar
 import common.service.SparkServiceTrait
 import extract.FileRead
 import model.JsonProcess._
-import model.SparkExecutor
+import model.{SparkExecutor, SparkTable}
 import model.query.SparkSqlQuery
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.spark.sql.types.{DataType, StructType}
+import org.apache.spark.sql.types._
 import org.apache.spark.sql._
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.functions._
@@ -18,15 +18,19 @@ import org.apache.spark.sql.{Encoder, Encoders}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
+import spray.json
+
+
+import scala.io.Source
 
 /**
   * Created by Dharani.Sugumar on 4/1/2019.
   */
 class jsonRead(sparkExecutor:SparkExecutor) {
 
+
   val spark = sparkExecutor.getSparksession()
   import spark.implicits._
-  //SparkSession.builder().appName("Data Engineering").master("local[*]").getOrCreate()
   private lazy val businessTable = new Business
   private lazy val checkinTable = new Checkin
   private lazy val photoTable = new Photo
@@ -34,41 +38,66 @@ class jsonRead(sparkExecutor:SparkExecutor) {
   private lazy val tipTable = new Tip
   private lazy val userTable = new User
 
-  def fileProcess(path: String) = {
+  def parsejson(srcPath:String,tgtPath:String):DataFrame={
+
+    val res = Source.fromFile(srcPath).getLines.//map{line=>line.replaceAll("'","").replaceAll("\"","").replace("{","{\"").replace(",","\",\"").replace(":","\":").replace("\":",":\"")}.toSeq
+      map{line=>line.replaceAll("'","").replaceAll("\"","").replace("{","{\"").replace(",","\",\"").replace(":","\":").replace("\":","\":\"").replace("}","\"}").replace("\"{\"","{\"").replace("\"}\"","\"}")
+      .replace("\":\"0",":0").replace(" ","")
+    }.toSeq
+    val yelpDS = spark.createDataset[String](res)(Encoders.STRING)
+    yelpDS.coalesce(1).write.mode(SaveMode.Overwrite).json(s"${tgtPath}TestMisDay.json")
+    yelpDS.show(2,false)
+    val rdd = spark.read.textFile(s"${tgtPath}TestMisDay.json").toJSON.map(value => value.replace("\\", "").replace("{\"value\":\"", "").replace("}\"}", "}")).rdd
+    val df = spark.read.json(rdd)
+    df.printSchema()
+    df
+    //    df.filter($"attributes.BusinessParking".isNotNull).filter(!($"attributes.BusinessParking"==="None"))//.select("attributes.BusinessParking.garage").show(false)
+    //      .show(false)
+    //    val cjmDf =
+    //      //spark.read.json(cjmDS)
+    //    spark.read.schema(busSchema).json(rdd).as[Businessjson]
+    //    cjmDf.printSchema()
+    //    cjmDf.show(2,false)//select("attributes.BusinessParking.element.garage").show(false)
 
 
-    import com.typesafe.config.ConfigFactory
-    //val getResult  = spark.read.json(path).toString().stripMargin
+    //    //val samdf = spark.read.textFile("C:\\Users\\dharani.sugumar\\Documents\\Innovation\\com-newyorker-challenge\\src\\main\\resources\\files\\business.json")
+    //    var json: String = ""
+    //    //val data = this.getClass.getResourceAsStream("C:\\Users\\dharani.sugumar\\Documents\\Innovation\\com-newyorker-challenge\\src\\main\\resources\\files\\business.json")
+    //    for (line <- Source.fromFile(fname).getLines) json += line
+    //    //val lines = Source.fromFile(data).getLines.toSeq
+    //    //val ds = spark.createDataset[String](lines)(Encoders.STRING)
+    //
+    //    val option = try {
+    //      JSON.parseFull(json)
+    //    } catch {
+    //      case ex: Exception => ex.printStackTrace()
+    //    }
+    //
+    //    // See what we found.
+    //    option match {
+    //      case None           => println("observations JSON invalid")
+    //      case Some(elements) => println("observations JSON valid")
+    //    }
 
-     // "{\"business_id\":\"1SWheh84yJXfytovILXOAQ\",\"name\":\"Arizona Biltmore Golf Club\",\"address\":\"2818 E Camino Acequia Drive\",\"city\":\"Phoenix\",\"state\":\"AZ\",\"postal_code\":\"85016\",\"latitude\":33.5221425,\"longitude\":-112.0184807,\"stars\":3.0,\"review_count\":5,\"is_open\":0,\"attributes\":{\"GoodForKids\":\"False\"},\"categories\":\"Golf, Active Life\",\"hours\":null}\n{\"business_id\":\"QXAEGFB4oINsVuTFxEYKFQ\",\"name\":\"Emerald Chinese Restaurant\",\"address\":\"30 Eglinton Avenue W\",\"city\":\"Mississauga\",\"state\":\"ON\",\"postal_code\":\"L5R 3E7\",\"latitude\":43.6054989743,\"longitude\":-79.652288909,\"stars\":2.5,\"review_count\":128,\"is_open\":1,\"attributes\":{\"RestaurantsReservations\":\"True\",\"GoodForMeal\":\"{'dessert': False, 'latenight': False, 'lunch': True, 'dinner': True, 'brunch': False, 'breakfast': False}\",\"BusinessParking\":\"{'garage': False, 'street': False, 'validated': False, 'lot': True, 'valet': False}\",\"Caters\":\"True\",\"NoiseLevel\":\"u'loud'\",\"RestaurantsTableService\":\"True\",\"RestaurantsTakeOut\":\"True\",\"RestaurantsPriceRange2\":\"2\",\"OutdoorSeating\":\"False\",\"BikeParking\":\"False\",\"Ambience\":\"{'romantic': False, 'intimate': False, 'classy': False, 'hipster': False, 'divey': False, 'touristy': False, 'trendy': False, 'upscale': False, 'casual': True}\",\"HasTV\":\"False\",\"WiFi\":\"u'no'\",\"GoodForKids\":\"True\",\"Alcohol\":\"u'full_bar'\",\"RestaurantsAttire\":\"u'casual'\",\"RestaurantsGoodForGroups\":\"True\",\"RestaurantsDelivery\":\"False\"},\"categories\":\"Specialty Food, Restaurants, Dim Sum, Imported Food, Food, Chinese, Ethnic Food, Seafood\",\"hours\":{\"Monday\":\"9:0-0:0\",\"Tuesday\":\"9:0-0:0\",\"Wednesday\":\"9:0-0:0\",\"Thursday\":\"9:0-0:0\",\"Friday\":\"9:0-1:0\",\"Saturday\":\"9:0-1:0\",\"Sunday\":\"9:0-0:0\"}}"
+  }
 
-    //val config = ConfigFactory.parseString(getResult)
-    //config.getConfigList("attributes.GoodForMeal").get(0).getString("nestedValue .GoodForMeal.dessert")
+  def fileProcess(path: String,df:DataFrame) = {
 
-    val schema_json = spark.read.json(path).schema.json
-    val newSchema = DataType.fromJson(schema_json).asInstanceOf[StructType]
-    val df = spark.read.schema(newSchema).json(path)
-    //df.printSchema()
     val fileFullName = path.substring(path.lastIndexOf("/") + 1).trim
     val fileExtract = fileFullName.substring(fileFullName.lastIndexOf(".")).length
     println(s" $fileFullName,$fileExtract and ${fileFullName.length - fileExtract}")
     val fileName = fileFullName.substring(0, fileFullName.length - fileExtract)
-
-    val df_1 = spark.read.json(path)
-    val df_2 = spark.read.format("json").load(path)
-    import  spark.implicits._
-  
-
+    println("started processing")
+    spark.sqlContext.sql("use default")
     fileName match {
-
       case "business" => {
         println(s"creating table for ${fileName}")
         val tableName = businessTable
-        spark.sqlContext.sql("drop table default.nyc_business").show(false)
+        //spark.sqlContext.sql("drop table default.nyc_business").show(false)
         sparkExecutor.createTable(tableName)
-        val businessdf = df.select("business_id","name","address","city","state","postal_code","latitude","longitude","stars","review_count",
+        df.select("business_id","name","address","city","state","postal_code","latitude","longitude","stars","review_count",
           "is_open", "hours.Monday","hours.Tuesday","hours.Wednesday","hours.Thursday","hours.Friday","hours.Saturday","hours.Sunday",
-          "categories", "attributes.RestaurantsReservations","attributes.GoodForMeal","attributes.BusinessParking",
+          "categories", "attributes.RestaurantsReservations","attributes.GoodForMeaml","attributes.BusinessParking",
           "attributes.Caters","attributes.NoiseLevel","attributes.RestaurantsTableService",
           "attributes.RestaurantsTakeOut","attributes.RestaurantsPriceRange2","attributes.OutdoorSeating",
           "attributes.BikeParking","attributes.Ambience","attributes.HasTV",
@@ -86,58 +115,58 @@ class jsonRead(sparkExecutor:SparkExecutor) {
           .withColumnRenamed("attributes.GoodForKids","GoodForKids").withColumnRenamed("attributes.Alcohol","Alcohol").withColumnRenamed("attributes.RestaurantsAttire","RestaurantsAttire").withColumnRenamed("attributes.RestaurantsGoodForGroups","RestaurantsGoodForGroups")
           .withColumnRenamed("attributes.RestaurantsDelivery","RestaurantsDelivery")
           .write.mode(SaveMode.Overwrite).insertInto(tableName.physicalName)
-        //spark.sqlContext.sql(s"select * from ${tableName.physicalName}").show(false)
+        println("started ************")
+        spark.sqlContext.sql(s"select * from ${tableName.physicalName}").show(false)
       }
       case "checkin" => {
         println(s"creating table for ${fileName}")
         var tableName = checkinTable
         sparkExecutor.createTable(tableName)
-        df.select("business_id","date")
-            .write.mode(SaveMode.Overwrite).insertInto(tableName.physicalName)
+        df.select("business_id","date").write.mode(SaveMode.Overwrite).insertInto(tableName.physicalName)
         //spark.sqlContext.sql(s"select * from ${tableName.physicalName}").show(false)
       }
       case "photo" => {
         var tableName = photoTable
         sparkExecutor.createTable(tableName)
-        df.select("caption","photo_id","business_id","label").write.mode(SaveMode.Overwrite).insertInto(tableName.physicalName)
+        df.select("caption","photo_id","business_id","label").write.mode(SaveMode.Overwrite)
+          .insertInto(tableName.physicalName)
         //spark.sqlContext.sql(s"select * from ${tableName.physicalName}").show(false)
       }
       case "review" => {
         var tableName = reviewTable
         sparkExecutor.createTable(tableName)
-        df.select("review_id","user_id","business_id","stars","date","text","useful","funny","cool")
-          .write.mode(SaveMode.Overwrite).insertInto(tableName.physicalName)
+        df.select("review_id","user_id","business_id","stars","date","text","useful","funny","cool").write.mode(SaveMode.Overwrite)
+          .insertInto(tableName.physicalName)
         //spark.sqlContext.sql(s"select * from ${tableName.physicalName}").show(false)
       }
       case "tip" => {
         var tableName = tipTable
         sparkExecutor.createTable(tableName)
-        df.select("user_id","business_id","text","date","compliment_count")
-          .write.mode(SaveMode.Overwrite).insertInto(tableName.physicalName)
+        df.select("user_id","business_id","text","date","compliment_count").write.mode(SaveMode.Overwrite)
+          .insertInto(tableName.physicalName)
         //spark.sqlContext.sql(s"select * from ${tableName.physicalName}").show(false)
       }
       case "user" => {
         var tableName = userTable
         sparkExecutor.createTable(tableName)
-        df.select("user_id","name","review_count","yelping_since","friends","useful","funny","cool","fans","elite.year","average_stars","compliment_hot"
-        ,"compliment_more","compliment_profile","compliment_cute","compliment_list","compliment_note","compliment_plain"
-        ,"compliment_cool","compliment_funny","compliment_writer","compliment_photos").withColumnRenamed("elite.year","year")
-          .write.mode(SaveMode.Overwrite).insertInto(tableName.physicalName)
+        df.select("user_id","name","review_count","yelping_since","friends","useful","funny","cool","fans",
+          "elite","average_stars","compliment_hot","compliment_more","compliment_profile","compliment_cute",
+          "compliment_list","compliment_note","compliment_plain","compliment_cool","compliment_funny",
+          "compliment_writer","compliment_photos").write.mode(SaveMode.Overwrite)
+          .insertInto(tableName.physicalName)
         //spark.sqlContext.sql(s"select * from ${tableName.physicalName}").show(false)
       }
-
       case _ => println("do nothing")
     }
   }
-
   def interestingQueries() = {
 
-    val businessData = spark.table("nyc_business")
-    val checkinData = spark.table("nyc_checkin")
-    val photoData = spark.table("nyc_photo")
-    val reviewData = spark.table("nyc_review")
-    val tipData = spark.table("nyc_tip")
-    val userData = spark.table("nyc_user")
+    val businessData = spark.table("default.nyc_business")
+    val checkinData = spark.table("default.nyc_checkin")
+    val photoData = spark.table("default.nyc_photo")
+    val reviewData = spark.table("default.nyc_review")
+    val tipData = spark.table("default.nyc_tip")
+    val userData = spark.table("default.nyc_user")
 
 
     sparkExecutor.registerAsTempTable(businessData, "businessData", "businessData output")
@@ -154,14 +183,14 @@ class jsonRead(sparkExecutor:SparkExecutor) {
       override val logMessage: String = "Data Querying"
       override val sqlStatement: String =
         s"""select photo.*,tip.*,checkin.*,review.* from businessData business
-        |right join photoData photo
-        |on business.business_id = photo.business_id
-        |right join tipData tip
-        |on tip.business_id = business.business_id
-        |right join checkinData checkin
-        |on checkin.business_id = business.business_id
-        |right join reviewData review
-        |on review.business_id = business.business_id""".stripMargin
+           |right join photoData photo
+           |on business.business_id = photo.business_id
+           |right join tipData tip
+           |on tip.business_id = business.business_id
+           |right join checkinData checkin
+           |on checkin.business_id = business.business_id
+           |right join reviewData review
+           |on review.business_id = business.business_id""".stripMargin
     }
     val InterestingDf1 = sparkExecutor.getDataFrameOnly(InterestingQuery1.sqlStatement)
     InterestingDf1.show(false)
@@ -221,12 +250,35 @@ class jsonRead(sparkExecutor:SparkExecutor) {
     val InterestingQuery6: SparkSqlQuery = new SparkSqlQuery {
       override val logMessage: String = "Data querying"
       override val sqlStatement: String =
-        s"""select user.year as elite_user_year , user.user_id, user.name
+        s"""select user.elite as elite_user_year , user.user_id, user.name
            |from userData user
          """.stripMargin
     }
     val InterestingDf6 = sparkExecutor.getDataFrameOnly(InterestingQuery6.sqlStatement)
     InterestingDf6.show(false)
+
+    println("Query to know the user who wrote the review and the review comments and user ratings on the products")
+    val InterestingQuery7: SparkSqlQuery = new SparkSqlQuery {
+      override val logMessage: String = "Data querying"
+      override val sqlStatement: String =
+        s"""
+           |(select sum(review_count) over (partition by user.user_id) review_sum,
+           |round(sum(review.stars) over (partition by user.user_id),2) review_stars,
+           |round(avg(review.stars) over (partition by user.user_id),2) avg_review_stars,
+           |rank() over (partition by user.user_id order by review.review_id desc) rnk,
+           |dense_rank() over (partition by user.user_id order by review.review_id desc) dns_rnk,
+           |percent_rank() over (partition by user.user_id order by review.review_id desc) pcnt_rnk,
+           |row_number() over (partition by user.user_id order by review.review_id desc) rn
+            from userdata user join reviewData review
+            on user.user_id =  review.user_id)
+            where review_sum >=10
+            order by user.user_id,review.review_id
+
+         """.stripMargin
+    }
+    val InterestingDf7 = sparkExecutor.getDataFrameOnly(InterestingQuery7.sqlStatement)
+    InterestingDf7.show(false)
+
 
     println("Query to get the list of users who wrote the tips ")
     val InterestingQuery8: SparkSqlQuery = new SparkSqlQuery {
@@ -287,6 +339,7 @@ trait jsonReadTrait extends SparkServiceTrait {
 
     var list = scala.collection.mutable.ListBuffer[String]()
     val srcDir ="src/main/resources/files"
+    val tgtDir ="src/main/resources/"
     val fileCall = new jsonRead(sparkExecutor)
     val filesList = FileSystem.get(new Configuration()).listFiles(new Path(srcDir), false)
     while (filesList.hasNext) {
@@ -303,23 +356,23 @@ trait jsonReadTrait extends SparkServiceTrait {
           if (fileTransfer.getFileSystem.exists(new org.apache.hadoop.fs.Path(srcDir + "/" + file))) {
             println(Calendar.getInstance().getTime() + s" The Source File $file exist in HDFS and HDFS to SFTP file transfer will be starting ...!")
             val path = srcDir + "/" + file
-
-            fileCall.fileProcess(path)
+            val df = fileCall.parsejson(path,tgtDir)
+            fileCall.fileProcess(path,df)
           }
         }
         fileCall.interestingQueries()
       }
-          catch
-          {
-            case e: Exception => e.printStackTrace()
-              println(Calendar.getInstance().getTime() + " ERROR " + e.printStackTrace())
-              throw new Exception("Reading Json files failure, hence Exiting ...!")
-          }
+      catch
+        {
+          case e: Exception => e.printStackTrace()
+            println(Calendar.getInstance().getTime() + " ERROR " + e.printStackTrace())
+            throw new Exception("Reading Json files failure, hence Exiting ...!")
         }
-        else {
-          println("Hdfs path doesn't have any json files to initiate transfer")
-        }
-      }
+    }
+    else {
+      println("Hdfs path doesn't have any json files to initiate transfer")
+    }
+  }
 
   def main(args: Array[String]): Unit = {
     println("Started processing json files ************************")
