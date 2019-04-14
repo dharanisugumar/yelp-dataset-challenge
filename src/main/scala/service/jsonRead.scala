@@ -97,7 +97,7 @@ class jsonRead(sparkExecutor:SparkExecutor) {
         sparkExecutor.createTable(tableName)
         df.select("business_id","name","address","city","state","postal_code","latitude","longitude","stars","review_count",
           "is_open", "hours.Monday","hours.Tuesday","hours.Wednesday","hours.Thursday","hours.Friday","hours.Saturday","hours.Sunday",
-          "categories", "attributes.RestaurantsReservations","attributes.GoodForMeaml","attributes.BusinessParking",
+          "categories", "attributes.RestaurantsReservations","attributes.GoodForMeal.dessert","attributes.BusinessParking.garage",
           "attributes.Caters","attributes.NoiseLevel","attributes.RestaurantsTableService",
           "attributes.RestaurantsTakeOut","attributes.RestaurantsPriceRange2","attributes.OutdoorSeating",
           "attributes.BikeParking","attributes.Ambience","attributes.HasTV",
@@ -269,10 +269,10 @@ class jsonRead(sparkExecutor:SparkExecutor) {
            |dense_rank() over (partition by user.user_id order by review.review_id desc) dns_rnk,
            |percent_rank() over (partition by user.user_id order by review.review_id desc) pcnt_rnk,
            |row_number() over (partition by user.user_id order by review.review_id desc) rn
-            from userdata user join reviewData review
-            on user.user_id =  review.user_id)
-            where review_sum >=10
-            order by user.user_id,review.review_id
+           |from userdata user join reviewData review
+           |on user.user_id =  review.user_id)
+           |where review_sum >=10
+           |order by user.user_id,review.review_id
 
          """.stripMargin
     }
@@ -351,11 +351,12 @@ trait jsonReadTrait extends SparkServiceTrait {
     if (numFiles > 0) {
       try {
         println(Calendar.getInstance().getTime() + " Started Reading Json files ")
-        val fileTransfer = new FileRead
+        val fileTransfer = new FileRead(srcDir,tgtDir)
         for (file <- finalList) {
           if (fileTransfer.getFileSystem.exists(new org.apache.hadoop.fs.Path(srcDir + "/" + file))) {
             println(Calendar.getInstance().getTime() + s" The Source File $file exist in HDFS and HDFS to SFTP file transfer will be starting ...!")
             val path = srcDir + "/" + file
+            fileTransfer.copyFile(finalList)
             val df = fileCall.parsejson(path,tgtDir)
             fileCall.fileProcess(path,df)
           }
