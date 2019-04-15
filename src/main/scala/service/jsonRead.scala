@@ -81,6 +81,30 @@ class jsonRead(sparkExecutor:SparkExecutor) {
 
   }
 
+  def test(time:DataFrame):Dataset[(String,String)]={
+    val conc = "00:00:00"
+    var from_out = ""
+    var to_out=""
+    val result =  time.map(x=>{
+
+      val from  = x.toString().substring(0,x.toString().indexOf('-'))
+      val to =    x.toString().substring(x.toString().indexOf('-')+1,x.toString().length)
+      if (from.length<conc.length) {
+        val ext = conc.length-from.length
+        val add = conc.takeRight(ext)
+        from_out = from+ add
+      }
+      if (to.length<conc.length) {
+        val ext = conc.length-to.length
+        val add = conc.takeRight(ext)
+        to_out = to+ add
+      }
+      (from_out,to_out)
+    })
+
+   result
+  }
+
   def fileProcess(path: String,df:DataFrame) = {
 
     val fileFullName = path.substring(path.lastIndexOf("/") + 1).trim
@@ -226,8 +250,8 @@ class jsonRead(sparkExecutor:SparkExecutor) {
     val InterestingQuery4: SparkSqlQuery = new SparkSqlQuery {
       override val logMessage: String = "Data querying"
       override val sqlStatement: String =
-        s"""select distinct(business.categories) as categories_list
-           |from businessData business
+        s"""select distinct(cat_list) as categories_list
+           |from businessData business lateral view explode(split(business.categories,","))categories as cat_list
          """.stripMargin
     }
     val InterestingDf4 = sparkExecutor.getDataFrameOnly(InterestingQuery4.sqlStatement)
